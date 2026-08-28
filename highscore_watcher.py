@@ -28,6 +28,10 @@ Each parsed file is POSTed to the Leaderboard app:
 This endpoint replaces ALL existing scores for that game with the list sent,
 so we always send the full contents of the file.
 
+While running, the script also POSTs {base-url}/api/heartbeat every 30 seconds
+(configurable via --heartbeat-interval; 0 disables) so the Leaderboard kiosk
+knows this exporter is alive.
+
 Requires: watchdog   ->   pip install watchdog
 """
 
@@ -39,9 +43,11 @@ import json
 import logging
 import re
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
@@ -57,6 +63,8 @@ DEFAULT_WATCH_DIR = r"D:\vPinball\HighScores"
 DEFAULT_BASE_URL = "http://localhost:3000"
 WATCHED_SUFFIXES = {".csv", ".txt"}
 MIN_SCORE = 1000  # ignore lines whose number is below this (combo/warp/medal counts, etc.)
+HEARTBEAT_INTERVAL = 30  # seconds between POST /api/heartbeat calls
+HEARTBEAT_SOURCE = "highscore_watcher"
 
 log = logging.getLogger("highscore_watcher")
 
@@ -141,9 +149,38 @@ def read_file_text(path: Path, retries: int = 5, delay: float = 0.4) -> str | No
 # --------------------------------------------------------------------------- #
 class LeaderboardClient:
     def __init__(self, base_url: str, timeout: float = 15.0, dry_run: bool = False):
-        self.endpoint = base_url.rstrip("/") + "/api/refreshPinballScore"
+        base = base_url.rstrip("/")
+        self.endpoint = base + "/api/refreshPinballScore"
+        self.heartbeat_endpoint = base + "/api/heartbeat"
         self.timeout = timeout
         self.dry_run = dry_run
+
+    def _post(self, url: str, payload: dict) -> tuple[int, str] | None:
+        body = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=body,
+            method="POST",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            return resp.status, resp.read().decode("utf-8", "replace")
+
+    def heartbeat(self) -> None:
+        payload = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "source": HEARTBEAT_SOURCE,
+        }
+        if self.dry_run:
+            log.debug("[dry-run] POST %s %s", self.heartbeat_endpoint, payload)
+            return
+        try:
+            status, _ = self._post(self.heartbeat_endpoint, payload)
+            log.debug("heartbeat -> %s", status)
+        except urllib.error.HTTPError as err:
+            log.warning("heartbeat failed: HTTP %s", err.code)
+        except urllib.error.URLError as err:
+            log.warning("heartbeat failed: %s", err.reason)
 
     def refresh(self, game_name: str, scores: List[Dict[str, object]]) -> None:
         payload = {"gameName": game_name, "scores": scores}
@@ -262,8 +299,29 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--scan-existing", action="store_true", help="Parse & send all matching files once at startup")
     p.add_argument("--once", action="store_true", help="Process current files once and exit (implies --scan-existing)")
     p.add_argument("--dry-run", action="store_true", help="Print the payload instead of POSTing")
+    p.add_argument(
+        "--heartbeat-interval",
+        type=float,
+        default=HEARTBEAT_INTERVAL,
+        help=f"Seconds between POST /api/heartbeat (default: {HEARTBEAT_INTERVAL}; 0 disables)",
+    )
     p.add_argument("-v", "--verbose", action="store_true", help="Verbose (debug) logging")
     return p
+
+
+def start_heartbeat(client: LeaderboardClient, interval: float, stop: threading.Event) -> threading.Thread | None:
+    """Fire POST /api/heartbeat immediately, then every `interval` seconds until `stop` is set."""
+    if interval <= 0:
+        return None
+
+    def _run() -> None:
+        while not stop.is_set():
+            client.heartbeat()
+            stop.wait(interval)
+
+    thread = threading.Thread(target=_run, name="heartbeat", daemon=True)
+    thread.start()
+    return thread
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -274,6 +332,9 @@ def main(argv: List[str] | None = None) -> int:
         format="%(asctime)s %(levelname)-7s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    # watchdog's own debug logging is extremely chatty; keep it quiet.
+    logging.getLogger("watchdog").setLevel(logging.WARNING)
+    logging.getLogger("fsevents").setLevel(logging.WARNING)
 
     watch_dir = Path(args.path)
     if not watch_dir.is_dir():
@@ -295,6 +356,11 @@ def main(argv: List[str] | None = None) -> int:
     observer.start()
     log.info("Watching %s for *.csv / *.txt changes -> %s", watch_dir, client.endpoint)
 
+    stop = threading.Event()
+    heartbeat = start_heartbeat(client, args.heartbeat_interval, stop)
+    if heartbeat:
+        log.info("Heartbeat every %gs -> %s", args.heartbeat_interval, client.heartbeat_endpoint)
+
     try:
         while True:
             time.sleep(0.5)
@@ -302,8 +368,11 @@ def main(argv: List[str] | None = None) -> int:
     except KeyboardInterrupt:
         log.info("Stopping...")
     finally:
+        stop.set()
         observer.stop()
         observer.join()
+        if heartbeat:
+            heartbeat.join(timeout=2)
     return 0
 
 
