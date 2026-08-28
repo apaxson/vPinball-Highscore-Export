@@ -1,7 +1,7 @@
 # Future Pinball Scripts
 Not all future pinball tables support PinemHi to get the high score.  Some fpRAM files are heavily modified to save additional variables to get around the limitations of Future Pinball and leverage BAM extensions.
 
-Here are files that have edited scripts that will save HighScores to a CSV after entering a high-score.  To use, you would edit the table in Future Pinball, choose "Edit Script", and then paste in the below script.  The versioning must be exact.
+Here are files that have edited scripts that will save HighScores to a CSV after entering a high-score.  To use, you would edit the table in Future Pinball, choose "Edit Script", and then paste in the below script.  The versioning must be exact.  Make sure to copy/paste the old script somewhere as a backup.
 
 # Code to make it happen
 ```commandline
