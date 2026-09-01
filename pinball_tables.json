@@ -1,0 +1,275 @@
+[
+  {
+    "Table Name": "AC/DC",
+    "ROM": "acd_170hc",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "American Country",
+    "ROM": "acd_170",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Attack from Mars",
+    "ROM": "afm_113b",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Back to the Future",
+    "ROM": "bttf_a28",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Blade Runner 2049",
+    "ROM": "BladeRunner2049",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Blizzard of Oz",
+    "ROM": "BlizzardOfOzz-Data",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Bram Stokers Dracula",
+    "ROM": "drac_l1",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Cactus Canyon",
+    "ROM": "cc_13",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Darkest Dungeon",
+    "ROM": "DarkestDungeon",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Deadpool",
+    "ROM": "jpsdeadpool",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Doctor Who",
+    "ROM": "dw_l2",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Dragon's Lair",
+    "ROM": "Mphisto",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Dune",
+    "ROM": "DUNE",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Game of Thrones",
+    "ROM": "gameofthrones",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Iron Maiden",
+    "ROM": "IM_LOTB",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "IronMan 2",
+    "ROM": "im_186ve",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Lord of the Rings",
+    "ROM": "lotr",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Metallica Premium Monsters",
+    "ROM": "mtl_180h",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Ripley's Believe it or Not",
+    "ROM": "ripleys",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Rollercoaster Tycoon",
+    "ROM": "rctycn",
+    "Pinemhi": true,
+    "Needs Reset": false,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Stargate",
+    "ROM": "stargat5",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Starship Troopers",
+    "ROM": "startrp2",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Stranger Things",
+    "ROM": "STRANGERTHINGS4",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": true
+  },
+  {
+    "Table Name": "Tales from the Crypt",
+    "ROM": "tftc_400",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Tales of the Arabian Nights",
+    "ROM": "totan_14",
+    "Pinemhi": true,
+    "Needs Reset": false,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "The Addams Family",
+    "ROM": "TAF_L7",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "The Goonies",
+    "ROM": "goonies",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "World Cup Soccer",
+    "ROM": "wcs_l2",
+    "Pinemhi": true,
+    "Needs Reset": false,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Lephrechaun King",
+    "ROM": "leprechaun",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Star Trek Next Generation",
+    "ROM": "sttng_l7",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "The Fifth Element",
+    "ROM": "5th_Element",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "The Matrix",
+    "ROM": "TheMatrix",
+    "Pinemhi": false,
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Tron Classic",
+    "ROM": "panther7",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Tron Legacy",
+    "ROM": "trn_174h",
+    "Pinemhi": true,
+    "Needs Reset": true,
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Avatar - Neytiri's Revenge",
+    "ROM": "",
+    "Pinemhi": "",
+    "Needs Reset": "",
+    "Confirmed Table Script Export": true
+  },
+  {
+    "Table Name": "F-14 Tomcat",
+    "ROM": "",
+    "Pinemhi": "",
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Mortal Combat",
+    "ROM": "",
+    "Pinemhi": "",
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Road Runner",
+    "ROM": "",
+    "Pinemhi": "",
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  },
+  {
+    "Table Name": "Retroflair",
+    "ROM": "",
+    "Pinemhi": "",
+    "Needs Reset": "",
+    "Confirmed Table Script Export": ""
+  }
+]
