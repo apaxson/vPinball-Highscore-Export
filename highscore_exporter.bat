@@ -3,6 +3,8 @@ REM to be picked up by the highscore_watcher.py
 REM %1 is the NVRAM name
 REM %2 is the Full Game Name
 REM This assumes pinemhi.exe is located in D:\.  Update as needed
+REM Pinup Popper command should be:
+REM highscore_exporter.bat [ROM] [GAMENAME]
 
 SET HSPATH=D:\vPinball\HighScores
 cd d:\
