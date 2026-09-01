@@ -2842,7 +2842,7 @@ End Sub
 	' front-ends / overlays can read it. Fails silently if the path is
 	' unavailable so it can never interfere with gameplay.
 	Const HSCSV_Folder = "D:\vPinball\HighScores"
-	Const HSCSV_File   = "D:\vPinball\HighScores\strangerthings.csv"
+	Const HSCSV_File   = "D:\vPinball\HighScores\Stranger Things.csv"
 
 	Sub ExportHighScoresCSV
 		Dim fso, ts, i
