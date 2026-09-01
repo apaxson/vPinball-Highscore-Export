@@ -19389,9 +19389,9 @@ End Function
 ' every time the high score table changes. Update HighScoreCSVPath below to
 ' point at wherever you want the file to land.
 '-----------------------------------------------------------------------------
-Const HighScoreCSVPath = "C:\Future Pinball\Tables\AvatarHighScores.csv"  '<-- EDIT THIS PATH
+Const HighScoreCSVPath = "C:\Future Pinball\Tables\Avatar.csv"  '<-- EDIT THIS PATH
 Const UpdateScoreBatchPath = "C:\updateScore.bat"  '<-- EDIT THIS PATH IF NEEDED
-Const HighScoreLogCSVPath = "C:\Future Pinball\Tables\AvatarHighScoresLog.csv"  '<-- EDIT THIS PATH
+Const HighScoreLogCSVPath = "C:\Future Pinball\Tables\AvatarHighScoresLog.log"  '<-- EDIT THIS PATH
 
 ' Appends a timestamped row to a CSV log file, since BAM's own debug log
 ' location isn't showing up. Uses the same iCOM-routed CreateObject as
