@@ -32,6 +32,10 @@ While running, the script also POSTs {base-url}/api/heartbeat every 30 seconds
 (configurable via --heartbeat-interval; 0 disables) so the Leaderboard kiosk
 knows this exporter is alive.
 
+All output is written both to the console and to a log file
+(default: ./highscore_watcher.log at INFO level; change with --log-file and
+--log-level).
+
 Requires: watchdog   ->   pip install watchdog
 """
 
@@ -61,6 +65,9 @@ except ImportError:  # pragma: no cover
 
 DEFAULT_WATCH_DIR = r"D:\vPinball\HighScores"
 DEFAULT_BASE_URL = "http://localhost:3000"
+DEFAULT_LOG_FILE = "highscore_watcher.log"  # written to the current working directory
+DEFAULT_LOG_LEVEL = "INFO"
+LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 WATCHED_SUFFIXES = {".csv", ".txt"}
 MIN_SCORE = 1000  # ignore lines whose number is below this (combo/warp/medal counts, etc.)
 HEARTBEAT_INTERVAL = 30  # seconds between POST /api/heartbeat calls
@@ -310,7 +317,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=HEARTBEAT_INTERVAL,
         help=f"Seconds between POST /api/heartbeat (default: {HEARTBEAT_INTERVAL}; 0 disables)",
     )
-    p.add_argument("-v", "--verbose", action="store_true", help="Verbose (debug) logging")
+    p.add_argument("-v", "--verbose", action="store_true", help="Verbose (debug) logging (overrides --log-level)")
+    p.add_argument(
+        "--log-file",
+        default=DEFAULT_LOG_FILE,
+        help=f"Path to the log file (default: {DEFAULT_LOG_FILE} in the current directory)",
+    )
+    p.add_argument(
+        "--log-level",
+        default=DEFAULT_LOG_LEVEL,
+        type=str.upper,
+        choices=LOG_LEVELS,
+        help=f"Logging level (default: {DEFAULT_LOG_LEVEL})",
+    )
     return p
 
 
@@ -335,14 +354,22 @@ def start_heartbeat(client: LeaderboardClient, interval: float, stop: threading.
 def main(argv: List[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
 
+    level = logging.DEBUG if args.verbose else getattr(logging, args.log_level)
+    log_path = Path(args.log_file)
+    try:
+        file_handler: logging.Handler = logging.FileHandler(log_path, encoding="utf-8")
+    except OSError as err:
+        sys.exit(f"Cannot open log file {log_path}: {err}")
     logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
+        level=level,
         format="%(asctime)s %(levelname)-7s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[logging.StreamHandler(), file_handler],
     )
     # watchdog's own debug logging is extremely chatty; keep it quiet.
     logging.getLogger("watchdog").setLevel(logging.WARNING)
     logging.getLogger("fsevents").setLevel(logging.WARNING)
+    log.info("Logging at %s to %s", logging.getLevelName(level), log_path.resolve())
 
     watch_dir = Path(args.path)
     if not watch_dir.is_dir():
