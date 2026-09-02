@@ -11,10 +11,14 @@ Watches a folder (default: D:\\vPinball\\HighScores\\) for changes to *.csv and
     scores     -> a list of { name, score } pulled from the file contents
 
 Parsing rule (applied to both .csv and .txt):
-    For every line, look for a 3-character alphanumeric token (the "name",
-    e.g. "SSR", "LON", "PAX") and a numeric token on the same line (the
-    "score", commas allowed, parsed as an int). Lines without both are
-    ignored. All other text is disregarded.
+    For every line:
+      * the "score" is the right-most number on the line (commas allowed,
+        parsed as an int);
+      * the "name" is whatever text sits between an optional leading rank
+        marker ("#1", "1)", "1.", "1," ...) and the score.
+    The numeric rank is stripped and never sent. The name is kept verbatim
+    (upper-cased), so initials that contain spaces -- e.g. "G S" -- survive.
+    Lines with no number, no name, or an implausibly long name are ignored.
 
 Each parsed file is POSTed to the Leaderboard app:
 
@@ -75,34 +79,48 @@ HEARTBEAT_SOURCE = "highscore_watcher"
 
 log = logging.getLogger("highscore_watcher")
 
-# A 3-char alphanumeric token, standalone, containing at least one letter
-# (so "1  EEE  2981520" -> "EEE", but "#1" or "123" is not treated as a name).
-NAME_RE = re.compile(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9]{3}(?![A-Za-z0-9]))[A-Za-z0-9]*[A-Za-z][A-Za-z0-9]*")
 # A run of digits, optionally with thousands separators: 75,000,000  or  2981520
 NUMBER_RE = re.compile(r"\d[\d,]*")
+# An optional leading rank marker to strip off the front of a line before we
+# read the name: "#1 ", "1) ", "1. ", "1 ", "1," (CSV "rank,name,score" rows).
+RANK_RE = re.compile(r"^\s*#?\d{1,3}(?:\s*[.):,\-]\s*|\s+)")
+# Real high-score names are player initials; anything much longer than that is
+# stray prose ("PLAYER 1 SCORE", "GRAND CHAMPION") that happens to sit on a
+# line with a number.
+MAX_NAME_LEN = 4  # alphanumeric characters, spaces/punctuation not counted
 
 
 # --------------------------------------------------------------------------- #
 # Parsing
 # --------------------------------------------------------------------------- #
 def parse_line(line: str) -> tuple[str, int] | None:
-    """Return (name, score) for a line, or None if the line has no score pair."""
-    name_match = NAME_RE.search(line)
-    if not name_match:
-        return None
-    name = name_match.group(0).upper()
+    """Return (name, score) for a line, or None if the line has no name/score pair.
 
-    # Take the last number on the line, ignoring any that sits inside the name
-    # token (e.g. rank prefixes like "#1"). The score is virtually always the
-    # right-most number on the line for these exports.
-    numbers = [m for m in NUMBER_RE.finditer(line) if m.start() >= name_match.end()]
+    Examples:
+        "PAX         5,312,290"      -> ("PAX", 5312290)
+        "#1 PAX      2,832,320"      -> ("PAX", 2832320)   (rank "#1" dropped)
+        "#2 G S      1,000,000"      -> ("G S", 1000000)   (spaced initials kept)
+        "1,PAX,5,000,000"           -> ("PAX", 5000000)   (CSV export rows)
+        "GRAND CHAMPION"            -> None               (no number)
+    """
+    # The score is the right-most number on the line.
+    numbers = list(NUMBER_RE.finditer(line))
     if not numbers:
         return None
-
-    raw = numbers[-1].group(0).replace(",", "")
+    score_match = numbers[-1]
+    raw = score_match.group(0).replace(",", "")
     if not raw.isdigit():
         return None
-    return name, int(raw)
+    score = int(raw)
+
+    # The name is the text before the score, minus an optional leading rank.
+    head = RANK_RE.sub("", line[: score_match.start()], count=1)
+    name = re.sub(r"\s+", " ", head).strip(" ,\t")
+    if not name or not any(ch.isalpha() for ch in name):
+        return None
+    if len(re.sub(r"[^A-Za-z0-9]", "", name)) > MAX_NAME_LEN:
+        return None
+    return name.upper(), score
 
 
 def parse_scores(text: str) -> List[Dict[str, object]]:
