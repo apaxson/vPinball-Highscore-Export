@@ -181,6 +181,11 @@ class LeaderboardClient:
             log.warning("heartbeat failed: HTTP %s", err.code)
         except urllib.error.URLError as err:
             log.warning("heartbeat failed: %s", err.reason)
+        except Exception as err:
+            # A bare socket timeout (TimeoutError) or other transient network
+            # error can escape urlopen without being wrapped in URLError.
+            # The heartbeat is best-effort, so log and carry on.
+            log.warning("heartbeat failed: %s", err)
 
     def refresh(self, game_name: str, scores: List[Dict[str, object]]) -> None:
         payload = {"gameName": game_name, "scores": scores}
@@ -316,7 +321,10 @@ def start_heartbeat(client: LeaderboardClient, interval: float, stop: threading.
 
     def _run() -> None:
         while not stop.is_set():
-            client.heartbeat()
+            try:
+                client.heartbeat()
+            except Exception as err:  # never let the heartbeat thread die
+                log.warning("heartbeat error: %s", err)
             stop.wait(interval)
 
     thread = threading.Thread(target=_run, name="heartbeat", daemon=True)
