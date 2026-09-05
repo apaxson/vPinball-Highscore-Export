@@ -89,6 +89,34 @@ RANK_RE = re.compile(r"^\s*#?\d{1,3}(?:\s*[.):,\-]\s*|\s+)")
 # line with a number.
 MAX_NAME_LEN = 4  # alphanumeric characters, spaces/punctuation not counted
 
+# A PinemHi text export is a run of labelled sections:
+#
+#     GRAND CHAMPION            <- heading
+#     SLL          1,234,560    <- entry
+#
+#     HIGHEST SCORES            <- heading
+#     1) BRE         987,650    <- entries...
+#
+#     MARTIAN CHAMPION          <- per-mode board, NOT the main leaderboard
+#     ...
+#     BUY-IN HIGHEST SCORES     <- paid-continue board, NOT the main leaderboard
+#     ...
+#
+# We only want the machine's main leaderboard: an optional single-line "grand
+# champion" section plus the first real high-score table that follows it. The
+# per-mode champion boards and the buy-in board always come afterwards, so once
+# we've taken the first table (or hit a heading that names a mode board) we stop.
+# A heading that introduces one of those trailing boards: "Martian Champion",
+# "Loop Champion", "Combo Champion", "Buy-in Highest Scores", "Final Match Goal
+# Champ", ... but never the "Grand Champion" line we do want.
+def _is_mode_heading(heading: str) -> bool:
+    h = re.sub(r"\s+", " ", heading).strip().upper().rstrip(".")
+    if "BUY-IN" in h or "BUY IN" in h:
+        return True
+    if h.endswith("CHAMPION") or h.endswith("CHAMP"):
+        return h != "GRAND CHAMPION"
+    return False
+
 
 # --------------------------------------------------------------------------- #
 # Parsing
@@ -123,19 +151,41 @@ def parse_line(line: str) -> tuple[str, int] | None:
     return name.upper(), score
 
 
-def parse_scores(text: str) -> List[Dict[str, object]]:
-    """Parse file text into an ordered, de-duplicated list of score dicts."""
-    scores: List[Dict[str, object]] = []
-    seen: set[tuple[str, int]] = set()
+def _split_sections(text: str) -> List[tuple[str | None, List[tuple[str, int]]]]:
+    """Group the file's lines into (heading, [(name, score), ...]) sections.
+
+    A "heading" is any line with letters that is not itself a name/score pair
+    ("GRAND CHAMPION", "SULTAN'S COURT", "Rank,Name,Score"). Lines that parse as
+    a name/score pair become entries of the current section; any other line
+    (dates, "MARTIANS DESTROYED", "10") is ignored. Lines before the first
+    heading form a leading section with heading ``None`` -- this is what keeps
+    header-less files (plain "NAME  SCORE" lists, CSV rows) parsing as before.
+    Sections with no entries are dropped.
+    """
+    sections: List[tuple[str | None, List[tuple[str, int]]]] = []
+    heading: str | None = None
+    entries: List[tuple[str, int]] = []
 
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
         parsed = parse_line(line)
-        if parsed is None:
+        if parsed is not None:
+            entries.append(parsed)
             continue
-        name, score = parsed
+        if re.search(r"[A-Za-z]", line):  # a label line -> start a new section
+            if entries:
+                sections.append((heading, entries))
+            heading, entries = line, []
+
+    if entries:
+        sections.append((heading, entries))
+    return sections
+
+
+def _collect(entries: List[tuple[str, int]], scores: list, seen: set) -> None:
+    for name, score in entries:
         # Keep only real scores; combo/warp/medal counts and similar are small.
         if score < MIN_SCORE:
             continue
@@ -145,6 +195,41 @@ def parse_scores(text: str) -> List[Dict[str, object]]:
             continue
         seen.add((name, score))
         scores.append({"customUsername": name, "score": score})
+
+
+def parse_scores(text: str) -> List[Dict[str, object]]:
+    """Parse file text into an ordered, de-duplicated list of score dicts.
+
+    Only the machine's main leaderboard is returned: the optional single-line
+    "grand champion" section plus the first high-score table after it. Per-mode
+    champion boards and the "buy-in" board (which PinemHi always writes further
+    down the file) are ignored -- see ``_is_mode_heading``.
+    """
+    sections = _split_sections(text)
+    scores: List[Dict[str, object]] = []
+    seen: set[tuple[str, int]] = set()
+    saw_entries = False
+    took_table = False
+
+    for heading, entries in sections:
+        saw_entries = True
+        # A named section: stop once we've already taken the main table, or as
+        # soon as we reach a per-mode / buy-in board.
+        if heading is not None and (took_table or _is_mode_heading(heading)):
+            break
+        _collect(entries, scores, seen)
+        # One entry is a lone "grand champion"; two or more is the real table,
+        # after which everything else in the file is a sub-board.
+        if len(entries) >= 2:
+            took_table = True
+
+    # No labelled structure at all (an unrecognised layout): fall back to a
+    # whole-file scan so a working file never silently stops parsing.
+    if not scores and not saw_entries:
+        for line in text.splitlines():
+            parsed = parse_line(line.strip())
+            if parsed is not None:
+                _collect([parsed], scores, seen)
 
     return scores
 
